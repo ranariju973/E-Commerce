@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ShopContext } from './ShopContext.js'
 import { products } from '../assets/assets'
 import { toast } from 'react-toastify'
+import { useNavigate } from 'react-router-dom'
 
 const ShopContextProvider = (props) => {
 
@@ -10,6 +11,7 @@ const ShopContextProvider = (props) => {
     const [search, setSearch] = useState('')
     const [showSearch, setShowSearch] = useState(false)
     const [cartItems, setCartItems] = useState({})
+    const navigate = useNavigate()
 
     const addToCart = async(itemId, size) => {
         let cartData = structuredClone(cartItems)
@@ -85,7 +87,8 @@ const ShopContextProvider = (props) => {
         addToCart,
         updateQuantity,
         getCartCount,
-        getCartAmount
+        getCartAmount,
+        navigate
 
 
     }
