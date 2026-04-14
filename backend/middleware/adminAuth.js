@@ -8,7 +8,10 @@ const adminAuth = async (req,res, next) => {
         }
 
         const token_decode = jwt.verify(token, process.env.JWT_SECRET)
-        if(token_decode.role !== process.env.ADMIN_EMAIL + process.env.ADMIN_PASSWORD) {
+        const adminSignature = process.env.ADMIN_EMAIL + process.env.ADMIN_PASSWORD
+        const tokenRole = typeof token_decode === 'string' ? token_decode : token_decode.role
+
+        if(tokenRole !== adminSignature) {
             return res.status(403).json({success: false, message: 'Unauthorized'})
         }
 

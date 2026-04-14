@@ -5,7 +5,24 @@ import productModel from '../models/productsModel.js';
 const addProduct = async (req, res) => {
     try {
 
-        const { name, description, price, category, subcategory, sizes, bestseller } = req.body;
+        const {
+            name,
+            description,
+            price,
+            category,
+            subCategory,
+            subcategory,
+            sizes,
+            bestseller,
+            isBestSeller
+        } = req.body;
+
+        const resolvedSubCategory = subCategory || subcategory;
+        const resolvedBestSeller = typeof isBestSeller !== 'undefined' ? isBestSeller : bestseller;
+
+        if (!resolvedSubCategory) {
+            return res.status(400).json({ success: false, message: 'subCategory is required' });
+        }
 
         const image1 = req.files.image1 && req.files.image1[0];
         const image2 = req.files.image2 && req.files.image2[0];
@@ -26,9 +43,9 @@ const addProduct = async (req, res) => {
             description,
             price: Number(price),
             category,
-            subCategory: subcategory,
+            subCategory: resolvedSubCategory,
             sizes: JSON.parse(sizes),
-            bestseller: bestseller === "true" ? true : false,
+            bestseller: resolvedBestSeller === "true" || resolvedBestSeller === true,
             image: imageUrls,
             date: Date.now()
         }
