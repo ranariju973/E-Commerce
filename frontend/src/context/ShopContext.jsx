@@ -1,17 +1,65 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { ShopContext } from './ShopContext.js'
-import { products } from '../assets/assets'
 import { toast } from 'react-toastify'
 import { useNavigate } from 'react-router-dom'
+import axios from 'axios'
 
 const ShopContextProvider = (props) => {
 
     const currency = '₹'
-    const delivery_fee = 10
+    const delivery_fee = 10;
+    const backendUrl = (import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000').replace(/\/+$/, '')
     const [search, setSearch] = useState('')
     const [showSearch, setShowSearch] = useState(false)
     const [cartItems, setCartItems] = useState({})
+    const [products, setProducts] = useState([])
+    const [token, setToken] = useState(() => localStorage.getItem('token') || '')
+    const authNoticeShownRef = useRef(false)
     const navigate = useNavigate()
+
+    const handleAuthError = useCallback((error) => {
+        if (!axios.isAxiosError(error) || error.response?.status !== 401) {
+            return false
+        }
+
+        const responseCode = error.response?.data?.code
+        const responseMessage = `${error.response?.data?.message || ''}`.toLowerCase()
+        const isExpiredToken = responseCode === 'TOKEN_EXPIRED' || responseMessage.includes('token expired') || responseMessage.includes('jwt expired')
+
+        setToken('')
+        localStorage.removeItem('token')
+        setCartItems({})
+
+        if (!authNoticeShownRef.current) {
+            toast.error(isExpiredToken ? 'Session expired. Please log in again.' : 'Please log in again to continue.')
+            authNoticeShownRef.current = true
+        }
+
+        navigate('/login')
+        return true
+    }, [navigate])
+
+    const getUserCart = useCallback(async (authToken) => {
+        try {
+            const response = await axios.post(`${backendUrl}/api/cart/get`, {}, {
+                headers: {
+                    token: authToken
+                }
+            })
+
+            if (response.data.success) {
+                setCartItems(response.data.cartData || {})
+            }
+        } catch (error) {
+            if (handleAuthError(error)) {
+                return
+            }
+
+            console.log(error)
+            toast.error('Failed to load cart data')
+        }
+    }, [backendUrl, handleAuthError])
+
 
     const addToCart = async(itemId, size) => {
         let cartData = structuredClone(cartItems)
@@ -33,6 +81,28 @@ const ShopContextProvider = (props) => {
 
         }
         setCartItems(cartData)
+
+        const authToken = token || localStorage.getItem('token')
+
+        if(authToken) {
+            try {
+                await axios.post(`${backendUrl}/api/cart/add`, {
+                    itemId,
+                    size
+                }, {
+                    headers: {
+                        token: authToken
+                    }
+                })
+            } catch (error) {
+                if (handleAuthError(error)) {
+                    return
+                }
+
+                console.log(error)
+                toast.error('Failed to add item to cart') 
+            }
+        }
     }
 
     const getCartCount = () => {
@@ -56,6 +126,29 @@ const ShopContextProvider = (props) => {
         let cartData = structuredClone(cartItems)
         cartData[itemId][size] = quantity
         setCartItems(cartData)
+
+        const authToken = token || localStorage.getItem('token')
+
+        if(authToken) {
+            try {
+                await axios.post(`${backendUrl}/api/cart/update`, {
+                    itemId,
+                    size,
+                    quantity
+                }, {
+                    headers: {
+                        token: authToken
+                    }
+                })
+            } catch (error) {
+                if (handleAuthError(error)) {
+                    return
+                }
+
+                console.log(error)
+                toast.error('Failed to update cart')
+            }
+        }
     }
 
     const getCartAmount =  () => {
@@ -75,6 +168,52 @@ const ShopContextProvider = (props) => {
         return totalAmount
     }
 
+    const getProductsData = useCallback(async () => {
+        try {
+            const response = await axios.get(`${backendUrl}/api/product/list`, { timeout: 10000 })
+            if (response.data.success) {
+                setProducts(response.data.products)
+            } else {
+                toast.error(response.data.message || 'Failed to load products')
+            }
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                const failedUrl = error.config?.url || `${backendUrl}/api/product/list`
+                console.error('Product fetch failed', {
+                    url: failedUrl,
+                    code: error.code,
+                    message: error.message
+                })
+
+                toast.error(`AxiosError: ${error.message}. Check backend URL: ${backendUrl}`)
+                return
+            }
+
+            console.log(error)
+            toast.error('Failed to load products')
+        }
+    }, [backendUrl])
+
+    useEffect(() => {
+        const loadProducts = setTimeout(() => {
+            getProductsData()
+        }, 0)
+
+        return () => clearTimeout(loadProducts)
+    }, [getProductsData])
+
+    useEffect(() => {
+        if (token) {
+            authNoticeShownRef.current = false
+
+            const loadCart = setTimeout(() => {
+                getUserCart(token)
+            }, 0)
+
+            return () => clearTimeout(loadCart)
+        }
+    }, [token, getUserCart])
+
     const value = {
         products,
         currency,
@@ -84,11 +223,15 @@ const ShopContextProvider = (props) => {
         showSearch,
         setShowSearch,
         cartItems,
+        setCartItems,
         addToCart,
         updateQuantity,
         getCartCount,
         getCartAmount,
-        navigate
+        navigate,
+        backendUrl,
+        token,
+        setToken
 
 
     }

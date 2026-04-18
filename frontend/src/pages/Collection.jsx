@@ -65,7 +65,7 @@ const Collection = () => {
 
   useEffect(() => {
     applyFilter()
-  }, [products, category, subCategory, search, showSearch])
+  }, [products, category, subCategory, search, showSearch, products])
 
   useEffect(() => {
     sortProducts()
