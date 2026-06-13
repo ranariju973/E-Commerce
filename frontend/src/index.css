@@ -64,8 +64,8 @@ a.active hr{
 
 .glass-card {
   background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
   border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-soft);
@@ -73,8 +73,8 @@ a.active hr{
 
 .glass-card-solid {
   background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
   border: 1px solid rgba(0, 0, 0, 0.06);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-card);
@@ -82,16 +82,16 @@ a.active hr{
 
 .glass-card-dark {
   background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-card);
 }
 
 .glass-nav {
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.82) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
@@ -302,9 +302,9 @@ a.active hr{
   height: 60px;
   padding-bottom: env(safe-area-inset-bottom, 0);
   z-index: 50;
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.82) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
   border-top: 1px solid rgba(0, 0, 0, 0.06);
   display: none;
 }
@@ -384,8 +384,8 @@ a.active hr{
   inset: 0;
   z-index: 100;
   background: rgba(255, 255, 255, 0.97);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
 }
 
 .search-input-wrapper {
@@ -460,8 +460,8 @@ a.active hr{
   inset: 0;
   z-index: 60;
   background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
 }
 
 .bottom-sheet {
