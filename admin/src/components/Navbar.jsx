@@ -3,7 +3,7 @@ import { assets } from '../assets/assets'
 
 const Navbar = ({ setToken }) => {
   return (
-    <div className='admin-topnav'>
+    <div className='admin-topnav bg-[#111111]/80 backdrop-blur-md border-b border-white/10 z-50 sticky top-0'>
       <div className='flex items-center justify-between py-3 px-4 md:px-6'>
         <div className='flex items-center gap-3'>
           <img className='w-[max(10%,80px)] invert brightness-0' src={assets.logo} alt='Logo' />

@@ -85,7 +85,7 @@ const BottomNav = () => {
   ]
 
   return (
-    <nav className='bottom-nav' aria-label='Bottom navigation'>
+    <nav className='bottom-nav bg-white/80 backdrop-blur-md border-t border-gray-100' aria-label='Bottom navigation'>
       {tabs.map((tab) => (
         <button
           key={tab.key}

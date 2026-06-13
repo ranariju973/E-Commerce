@@ -24,7 +24,7 @@ const Navbar = () => {
     }
 
   return (
-    <div className={`sticky-header ${scrolled ? 'scrolled glass-nav' : ''}`}>
+    <div className={`sticky-header z-50 ${scrolled ? 'scrolled bg-white/80 backdrop-blur-md border-b border-gray-100' : ''}`}>
       <div className='relative z-40 flex items-center justify-between py-4 font-medium px-4 sm:px-[5vw] md:px-[7vw] lg:px-[9vw]'>
 
         <Link to='/'>
