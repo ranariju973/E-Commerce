@@ -1,5 +1,5 @@
 import express from "express";
-import { addProduct, listProducts, removeProduct, singleProduct } from "../controllers/productController.js";
+import { addProduct, listProducts, removeProduct, singleProduct, updateProduct } from "../controllers/productController.js";
 import upload from "../middleware/multer.js";
 import adminAuth from "../middleware/adminAuth.js";
 
@@ -19,6 +19,14 @@ productRouter.get('/list', listProducts);
 //route for remove product
 productRouter.post('/remove',adminAuth, removeProduct);
 productRouter.delete('/remove/:id',adminAuth, removeProduct);
+
+//route for update product
+productRouter.put('/update/:id', adminAuth, upload.fields([
+    {name: 'image1', maxCount: 1}, 
+    {name: 'image2', maxCount: 1}, 
+    {name: 'image3', maxCount: 1}, 
+    {name: 'image4', maxCount: 1}
+]), updateProduct);
 
 //route for single product details
 productRouter.get('/:id', singleProduct);

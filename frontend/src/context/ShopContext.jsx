@@ -8,14 +8,77 @@ const ShopContextProvider = (props) => {
 
     const currency = '₹'
     const delivery_fee = 10;
+    const defaultWeight = 0.1
     const backendUrl = (import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000').replace(/\/+$/, '')
     const [search, setSearch] = useState('')
     const [showSearch, setShowSearch] = useState(false)
     const [cartItems, setCartItems] = useState({})
     const [products, setProducts] = useState([])
+    const [savedAddresses, setSavedAddresses] = useState([])
+    const [defaultAddressId, setDefaultAddressId] = useState('')
     const [token, setToken] = useState(() => localStorage.getItem('token') || '')
     const authNoticeShownRef = useRef(false)
     const navigate = useNavigate()
+
+    const normalizeWeight = useCallback((value) => {
+        const parsed = Number(value)
+        if (!Number.isFinite(parsed) || parsed <= 0) {
+            return defaultWeight
+        }
+
+        return parsed
+    }, [defaultWeight])
+
+    const normalizeCartData = useCallback((rawCartData) => {
+        if (!rawCartData || typeof rawCartData !== 'object') {
+            return {}
+        }
+
+        const normalized = {}
+
+        for (const [itemId, itemValue] of Object.entries(rawCartData)) {
+            if (typeof itemValue === 'number') {
+                const quantity = Math.floor(Number(itemValue))
+                if (quantity > 0) {
+                    normalized[itemId] = {
+                        quantity,
+                        weight: defaultWeight
+                    }
+                }
+                continue
+            }
+
+            if (itemValue && typeof itemValue === 'object') {
+                if ('quantity' in itemValue || 'weight' in itemValue) {
+                    const quantity = Math.floor(Number(itemValue.quantity))
+                    if (quantity > 0) {
+                        normalized[itemId] = {
+                            quantity,
+                            weight: normalizeWeight(itemValue.weight)
+                        }
+                    }
+                    continue
+                }
+
+                let totalQuantity = 0
+                for (const nestedQuantity of Object.values(itemValue)) {
+                    const parsedQuantity = Math.floor(Number(nestedQuantity))
+                    if (parsedQuantity > 0) {
+                        totalQuantity += parsedQuantity
+                    }
+                }
+
+                if (totalQuantity > 0) {
+                    normalized[itemId] = {
+                        quantity: totalQuantity,
+                        weight: defaultWeight
+                    }
+                }
+            }
+        }
+
+        return normalized
+    }, [normalizeWeight])
 
     const handleAuthError = useCallback((error) => {
         if (!axios.isAxiosError(error) || error.response?.status !== 401) {
@@ -29,6 +92,8 @@ const ShopContextProvider = (props) => {
         setToken('')
         localStorage.removeItem('token')
         setCartItems({})
+        setSavedAddresses([])
+        setDefaultAddressId('')
 
         if (!authNoticeShownRef.current) {
             toast.error(isExpiredToken ? 'Session expired. Please log in again.' : 'Please log in again to continue.')
@@ -48,7 +113,7 @@ const ShopContextProvider = (props) => {
             })
 
             if (response.data.success) {
-                setCartItems(response.data.cartData || {})
+                setCartItems(normalizeCartData(response.data.cartData))
             }
         } catch (error) {
             if (handleAuthError(error)) {
@@ -58,27 +123,40 @@ const ShopContextProvider = (props) => {
             console.log(error)
             toast.error('Failed to load cart data')
         }
+    }, [backendUrl, handleAuthError, normalizeCartData])
+
+    const getUserProfile = useCallback(async (authToken) => {
+        try {
+            const response = await axios.post(`${backendUrl}/api/user/profile`, {}, {
+                headers: {
+                    token: authToken
+                }
+            })
+
+            if (response.data.success) {
+                setSavedAddresses(response.data.profile?.addresses || [])
+                setDefaultAddressId(response.data.profile?.defaultAddressId || '')
+            }
+        } catch (error) {
+            if (handleAuthError(error)) {
+                return
+            }
+
+            console.log(error)
+            toast.error('Failed to load saved address')
+        }
     }, [backendUrl, handleAuthError])
 
 
-    const addToCart = async(itemId, size) => {
-        let cartData = structuredClone(cartItems)
+    const addToCart = async(itemId, quantity = 1, weight = 1) => {
+        const cartData = structuredClone(cartItems)
+        const normalizedQuantity = Math.max(1, Math.floor(Number(quantity) || 1))
+        const normalizedWeight = normalizeWeight(weight)
+        const existingCartItem = cartData[itemId] || { quantity: 0, weight: normalizedWeight }
 
-        if(!size) {
-            toast.error('Please select a size before adding to cart')
-            return
-        }
-
-        if(cartData[itemId]) {
-            if(cartData[itemId][size]) {
-                cartData[itemId][size] += 1
-            } else {
-                cartData[itemId][size] = 1
-            }
-        } else {
-            cartData[itemId] = {}
-            cartData[itemId][size] = 1
-
+        cartData[itemId] = {
+            quantity: existingCartItem.quantity + normalizedQuantity,
+            weight: normalizedWeight
         }
         setCartItems(cartData)
 
@@ -88,7 +166,8 @@ const ShopContextProvider = (props) => {
             try {
                 await axios.post(`${backendUrl}/api/cart/add`, {
                     itemId,
-                    size
+                    quantity: normalizedQuantity,
+                    weight: normalizedWeight
                 }, {
                     headers: {
                         token: authToken
@@ -107,24 +186,34 @@ const ShopContextProvider = (props) => {
 
     const getCartCount = () => {
         let totalCount = 0
-        for(const items in cartItems) {
-            for(const item in cartItems[items]) {
-                try {
-                    if(cartItems[items][item] > 0) { 
-                        totalCount += cartItems[items][item]
-                    }
-                } catch(error) {
-                    console.log(error)
+        for (const item of Object.values(cartItems)) {
+            try {
+                const quantity = Number(item?.quantity || 0)
+                if (quantity > 0) {
+                    totalCount += quantity
                 }
-        
+            } catch(error) {
+                console.log(error)
             }
         }
+
         return totalCount
     }
 
-    const updateQuantity = async (itemId, size, quantity) => {
+    const updateQuantity = async (itemId, quantity, weight) => {
         let cartData = structuredClone(cartItems)
-        cartData[itemId][size] = quantity
+        const existingCartItem = cartData[itemId] || { quantity: 0, weight: defaultWeight }
+        const normalizedWeight = normalizeWeight(weight ?? existingCartItem.weight)
+
+        if (quantity <= 0) {
+            delete cartData[itemId]
+        } else {
+            cartData[itemId] = {
+                quantity,
+                weight: normalizedWeight
+            }
+        }
+
         setCartItems(cartData)
 
         const authToken = token || localStorage.getItem('token')
@@ -133,8 +222,8 @@ const ShopContextProvider = (props) => {
             try {
                 await axios.post(`${backendUrl}/api/cart/update`, {
                     itemId,
-                    size,
-                    quantity
+                    quantity,
+                    weight: normalizedWeight
                 }, {
                     headers: {
                         token: authToken
@@ -153,18 +242,18 @@ const ShopContextProvider = (props) => {
 
     const getCartAmount =  () => {
         let totalAmount = 0
-        for(const items in cartItems)  {
-            let itemInfo = products.find((product) => product._id === items)
-            for(const item in cartItems[items]) {
-                try {
-                    if(cartItems[items][item] > 0) { 
-                        totalAmount += cartItems[items][item] * itemInfo.price
-                    }
-                } catch(error) {
-                    console.log(error)
+        for (const [itemId, cartItem] of Object.entries(cartItems)) {
+            const itemInfo = products.find((product) => product._id === itemId)
+            try {
+                const quantity = Number(cartItem?.quantity || 0)
+                if (itemInfo && quantity > 0) {
+                    totalAmount += quantity * itemInfo.price
                 }
-            }    
+            } catch(error) {
+                console.log(error)
+            }
         }
+
         return totalAmount
     }
 
@@ -206,13 +295,27 @@ const ShopContextProvider = (props) => {
         if (token) {
             authNoticeShownRef.current = false
 
-            const loadCart = setTimeout(() => {
+            const loadUserData = setTimeout(() => {
+                getUserProfile(token)
                 getUserCart(token)
             }, 0)
 
-            return () => clearTimeout(loadCart)
+            return () => clearTimeout(loadUserData)
         }
-    }, [token, getUserCart])
+
+        setSavedAddresses([])
+        setDefaultAddressId('')
+        setCartItems({})
+    }, [token, getUserCart, getUserProfile])
+
+    const logoutUser = () => {
+        setToken('')
+        localStorage.removeItem('token')
+        setCartItems({})
+        setSavedAddresses([])
+        setDefaultAddressId('')
+        navigate('/login')
+    }
 
     const value = {
         products,
@@ -231,9 +334,13 @@ const ShopContextProvider = (props) => {
         navigate,
         backendUrl,
         token,
-        setToken
-
-
+        setToken,
+        savedAddresses,
+        setSavedAddresses,
+        defaultAddressId,
+        setDefaultAddressId,
+        refreshUserProfile: getUserProfile,
+        logoutUser
     }
 
     return (

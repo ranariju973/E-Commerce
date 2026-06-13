@@ -6,6 +6,9 @@ const orderSchema = new mongoose.Schema({
     amount : {type : Number, required: true},
     address : {type : Object, required: true},
     status : {type : String, required: true, default: 'Order Placed'},
+    cancelRequestStatus: {type : String, required: true, default: 'none'},
+    cancelRequestedAt: {type : Date, default: null},
+    cancelRespondedAt: {type : Date, default: null},
     paymentMethod: {type : String, required: true},
     payment: {type : Boolean, required: true, default: false},
     date : {type : Date, default: Date.now}

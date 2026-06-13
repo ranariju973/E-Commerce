@@ -1,13 +1,16 @@
 import mongoose from "mongoose";
+import { PRODUCT_CATEGORIES, PRODUCT_SUB_CATEGORIES } from "../config/productTaxonomy.js";
 
 const productSchema = new mongoose.Schema({
     name: {
         type: String,
         required: true,
+        trim: true,
     },
     description: {
         type: String,
         required: true,
+        trim: true,
     },
     price: {
         type: Number,
@@ -20,14 +23,14 @@ const productSchema = new mongoose.Schema({
     category: {
         type: String,
         required: true,
+        trim: true,
+        enum: PRODUCT_CATEGORIES,
     },
     subCategory: {
         type: String,
         required: true,
-    },
-    sizes: {
-        type: Array,
-        required: true,
+        trim: true,
+        enum: PRODUCT_SUB_CATEGORIES,
     },
     bestseller: {
         type: Boolean
@@ -35,6 +38,18 @@ const productSchema = new mongoose.Schema({
     date: {
         type: Number,
         required: true,
+    },
+    averageRating: {
+        type: Number,
+        default: 0,
+    },
+    totalReviews: {
+        type: Number,
+        default: 0,
+    },
+    ratingDistribution: {
+        type: Object,
+        default: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
     }
 })
 

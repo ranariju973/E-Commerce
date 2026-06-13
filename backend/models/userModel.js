@@ -12,11 +12,27 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: true,
+        required: false,
+    },
+    authProvider: {
+        type: String,
+        default: 'local'
     },
     cartData: {
         type: Object,
         default: {}
+    },
+    address: {
+        type: Object,
+        default: {}
+    },
+    addresses: {
+        type: Array,
+        default: []
+    },
+    defaultAddressId: {
+        type: String,
+        default: ''
     }
 } , {minimize: false});
 

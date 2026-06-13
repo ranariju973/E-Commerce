@@ -1,18 +1,25 @@
-import React, {useContext} from 'react'
+import React, { useContext } from 'react'
 import { Link } from 'react-router-dom'
 import { ShopContext } from '../context/ShopContext'
+import { getCardImage } from '../utils/cloudinaryHelper'
 
-const ProductItem = ({id, image, name, price}) => {
+const ProductItem = ({ id, image, name, price }) => {
 
-    const {currency} = useContext(ShopContext)
+    const { currency } = useContext(ShopContext)
 
   return (
-    <Link className='text-gray-700 cursor-pointer' to={`/product/${id}`}>
-        <div className='overflow-hidden'>
-            <img className='hover:scale-110 transition ease-in-out' src={image[0]} alt={name} />
+    <Link className='group text-gray-700 cursor-pointer block' to={`/product/${id}`}>
+        <div className='product-image-wrapper'>
+            <img
+              src={getCardImage(image[0])}
+              alt={name}
+              loading='lazy'
+            />
         </div>
-        <p className='pt-3 pb-1 text-sm'>{name}</p>
-        <p className='text-sm font-medium'>{currency} {price}</p>
+        <div className='pt-3 pb-1'>
+          <p className='text-sm leading-snug line-clamp-2 group-hover:text-black transition'>{name}</p>
+          <p className='text-sm font-semibold mt-1'>{currency}{price}</p>
+        </div>
     </Link>
   )
 }
