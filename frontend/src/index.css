@@ -758,13 +758,17 @@ a.active hr{
 /* SAFARI GLASSMORPHISM FIX */
 .backdrop-blur-sm {
   -webkit-backdrop-filter: blur(4px) !important;
+  backdrop-filter: blur(4px) !important;
 }
 .backdrop-blur-md {
   -webkit-backdrop-filter: blur(12px) !important;
+  backdrop-filter: blur(12px) !important;
 }
 .backdrop-blur-lg {
   -webkit-backdrop-filter: blur(16px) !important;
+  backdrop-filter: blur(16px) !important;
 }
 .backdrop-blur-xl {
   -webkit-backdrop-filter: blur(24px) !important;
+  backdrop-filter: blur(24px) !important;
 }
