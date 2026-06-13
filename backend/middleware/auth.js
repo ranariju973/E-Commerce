@@ -7,6 +7,7 @@ const authUser = async (req,res, next) => {
     }
 
     try {
+        console.log("Verifying token. JWT_SECRET:", process.env.JWT_SECRET ? "exists" : "MISSING!");
         const token_decode = jwt.verify(token, process.env.JWT_SECRET)
         req.body.userId = token_decode.id
         next()
@@ -15,7 +16,7 @@ const authUser = async (req,res, next) => {
             return res.status(401).json({success: false, code: 'TOKEN_EXPIRED', message: 'Token expired'})
         }
 
-        console.log(error)
+        console.log("Token verification error:", error.message)
 
         return res.status(401).json({success: false, code: 'TOKEN_INVALID', message: 'Invalid token'})
     }
